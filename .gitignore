@@ -1,0 +1,4 @@
+.idea/
+secrets.py
+debug.log
+__pycache__/
