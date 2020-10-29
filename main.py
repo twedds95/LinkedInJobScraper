@@ -93,16 +93,20 @@ class Scraper:
                 self.parse_jobs()
 
     def check_job(self):
+        nowords = ['intern', 'stage', 'part-time', 'senior']
         count = 0
         details = self.driver.find_element_by_xpath('//*[@id="job-details"]').text
         for keyword in self.keywords:
-            if keyword in details:
+            if keyword in details.lower():
                 count += 1
-        if count > 1 and not any(word in details for word in ['intern', 'stage', 'part-time', 'senior', 'Senior']):
+        words = details.lower().split(' ')
+        if count > 1 and not any(word in details.lower() for word in nowords) \
+                and not any((words[i].isdigit() and int(words[i]) > 1 and words[i + 1] == 'years') \
+                            for i in range(len(words) - 1)):
             return True
         return False
 
 
-s = Scraper(['Java', 'Python', 'Junior', 'C#', 'React'])
+s = Scraper(['java', 'python', 'junior', 'c#', 'react'])
 s.login()
 s.parse_jobs()
