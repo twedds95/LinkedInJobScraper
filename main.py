@@ -35,7 +35,6 @@ class Scraper:
         chat_btn = self.driver.find_element_by_xpath('//*[@id="ember191"]')
         chat_btn.click()
 
-
     def parse_jobs(self):
         # LinkedIn only loads jobs when you scroll down
         left = self.driver.find_element_by_class_name("jobs-search-results")
