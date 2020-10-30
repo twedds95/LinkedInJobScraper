@@ -6,9 +6,10 @@ from time import sleep
 
 
 class Scraper:
-    def __init__(self, keywords):
+    def __init__(self, keywords, deal_breakers):
         self.driver = webdriver.Chrome()
         self.keywords = keywords
+        self.deal_breakers = deal_breakers
 
     def login(self):
         self.driver.get('https://www.linkedin.com/jobs/')
@@ -29,6 +30,11 @@ class Scraper:
             jobs_list = self.driver.find_elements_by_xpath(
                 '/html/body/div[7]/div[3]/div/section/section[3]/div/div/ul/li')
         jobs_list[0].click()
+        sleep(1)
+        # Lower chat so it doesn't get in the way
+        chat_btn = self.driver.find_element_by_xpath('//*[@id="ember191"]')
+        chat_btn.click()
+
 
     def parse_jobs(self):
         # LinkedIn only loads jobs when you scroll down
@@ -71,8 +77,8 @@ class Scraper:
                 if self.check_job() and 'Unsave' not in save.text:
                     save.click()
                     sleep(1)
-            except ElementClickInterceptedException as ex:
-                sleep(1)
+            except ElementClickInterceptedException:
+                sleep(2)
                 save.click()
             except NoSuchElementException:
                 continue
@@ -93,20 +99,22 @@ class Scraper:
                 self.parse_jobs()
 
     def check_job(self):
-        nowords = ['intern', 'stage', 'part-time', 'senior']
         count = 0
         details = self.driver.find_element_by_xpath('//*[@id="job-details"]').text
-        for keyword in self.keywords:
-            if keyword in details.lower():
-                count += 1
         words = details.lower().split(' ')
-        if count > 1 and not any(word in details.lower() for word in nowords) \
-                and not any((words[i].isdigit() and int(words[i]) > 1 and words[i + 1] == 'years') \
-                            for i in range(len(words) - 1)):
+        for keyword in self.keywords.keys():
+            if keyword in words:
+                count += self.keywords[keyword]
+        if count > 7 and not any(word in words for word in self.deal_breakers) \
+                and not any(
+            (words[i + 1] == 'years' and ((words[i].isdigit() and int(words[i]) > 1) or not words[i].isdigit())) \
+            for i in range(len(words) - 1)):
             return True
         return False
 
 
-s = Scraper(['java', 'python', 'junior', 'c#', 'react'])
+deal_breaks = ['intern', 'stage', 'part-time', 'senior']
+keys = {'java': 5, 'python': 3.5, 'junior': 4, 'entry-level': 4, 'c#': 4, 'react': 2, 'vue': 2}
+s = Scraper(keys, deal_breaks)
 s.login()
 s.parse_jobs()
