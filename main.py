@@ -26,13 +26,16 @@ class Scraper:
         sleep(2)
         # the first div number changes between 7 and 8 for no apparent reason, so we must check both on most calls
         jobs_list = self.driver.find_elements_by_xpath('/html/body/div[8]/div[3]/div/section/section[3]/div/div/ul/li')
+        div_num = 8
         if len(jobs_list) == 0 or jobs_list is None:
             jobs_list = self.driver.find_elements_by_xpath(
                 '/html/body/div[7]/div[3]/div/section/section[3]/div/div/ul/li')
+            div_num = 7
         jobs_list[0].click()
         sleep(1)
         # Lower chat so it doesn't get in the way
-        chat_btn = self.driver.find_element_by_xpath('//*[@id="ember191"]')
+        chat_btn = self.driver.find_element_by_xpath(
+            '/html/body/div[' + str(div_num) + ']/aside/div[1]/header/section[2]/button[2]')
         chat_btn.click()
 
     def parse_jobs(self):
@@ -64,21 +67,20 @@ class Scraper:
             try:
                 job_link.click()
             except ElementClickInterceptedException:
-                x_popup = self.driver.find_element_by_xpath('/html/body/div[1]/section/ul/li/button/li-icon')
-                x_popup.click()
-                sleep(1)
+                popups = self.driver.find_elements_by_xpath('/html/body/div[1]/section/ul/li')
+                for p in popups:
+                    x_popup = p.find_element_by_tag_name('button')
+                    x_popup.click()
+                    sleep(0.2)
                 job_link.click()
-            sleep(1)
+            sleep(0.5)
             try:
                 save = self.driver.find_element_by_xpath(
                     '/html/body/div[' + str(div_num) +
                     ']/div[3]/div[3]/div/div/div/section/div/div/div[1]/div/div[1]/div/div/div[2]/div[2]/div[1]/button')
                 if self.check_job() and 'Unsave' not in save.text:
                     save.click()
-                    sleep(1)
-            except ElementClickInterceptedException:
-                sleep(2)
-                save.click()
+                    sleep(0.5)
             except NoSuchElementException:
                 continue
         self.update_page()
